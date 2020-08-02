@@ -1,0 +1,23 @@
+<style type="text/css">
+.map-container {
+  position:   relative;
+  width:      100%;
+  height: 0;
+  padding-top:   66.6%;
+}
+
+.map {
+  position: absolute;
+  top:      0;
+  left:     0;
+  bottom:   0;
+  right:    0;
+  width:    100%;
+  height:   100%
+}
+</style>
+
+<div class="map-container">
+	<iframe class="map" type="text/html" width="100%" src="/track.html?track=gpx/{{ index .Params 0 }}.gpx" allowfullscreen frameborder="0">
+	</iframe>
+</div>
