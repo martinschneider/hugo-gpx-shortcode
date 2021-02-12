@@ -1,23 +1,97 @@
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css" integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ==" crossorigin="" />
 <style type="text/css">
-.map-container {
-  position:   relative;
-  width:      100%;
-  height: 0;
-  padding-top:   66.6%;
-}
-
-.map {
-  position: absolute;
-  top:      0;
-  left:     0;
-  bottom:   0;
-  right:    0;
-  width:    100%;
-  height:   100%
-}
+  .gpx {
+    border: 1px #aaa solid;
+    max-width: 100%;
+    margin: 1em auto;
+  }
+  .gpx .map {
+    border: 1px #888 solid;
+    border-left: none;
+    border-right: none;
+    width: 100%;
+    min-height: 800px;
+    margin: 0;
+  }
+  .gpx footer {
+    background: #f0f0f0;
+    padding: 0.5em;
+  }
+  .gpx ul.info {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    font-size: smaller;
+  }
+  .gpx ul.info li {
+    color: #666;
+    padding: 2px;
+    display: inline;
+  }
+  .gpx ul.info li span {
+    color: black;
+  }
+  .gpx {
+    box-sizing: unset
+  }
 </style>
+<script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js" integrity="sha512-gZwIG9x3wUXg2hdXF6+rVkLF/0Vi9U8D2Ntg4Ga5I5BZpVkVxlJWbSQtXPSiUTtC0TjtGOmxa1AJPuV0CPthew==" crossorigin=""></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-gpx/1.5.0/gpx.min.js"></script>
+<section id="container" class="gpx">
+  <article>
+    <div class="map" id="map-{{.Get "id" }}"></div>
+  </article>
+  {{ if or ( eq (.Get "footer") "true" ) ( eq (.Get "footer") "" )}}
+  <footer>
+    <ul class="info">
+      <li><span class="start"></span></li>&mdash;<li>Distance:&nbsp;<span class="distance"></span>&nbsp;km</li>
+      &mdash; <li>Duration:&nbsp;<span class="duration"></span></li>
+      &mdash; <li>Elevation:&nbsp;+<span class="elevation-gain"></span>&nbsp;m,
+        -<span class="elevation-loss"></span>&nbsp;m
+        (net:&nbsp;<span class="elevation-net"></span>&nbsp;m)</li>
+      &mdash;<li><a href="/gpx/{{.Get "id" }}.gpx">Download</a></li>
+    </ul>
+  </footer>
+  {{ end }}
+</section>
+<script>
+  var url = '/gpx/{{.Get "id" }}.gpx';
+  var mapid = 'map-{{.Get "id" }}';
+  var container = document.getElementById('container');
 
-<div class="map-container">
-	<iframe class="map" type="text/html" width="100%" src="/track.html?track=gpx/{{ index .Params 0 }}.gpx" allowfullscreen frameborder="0">
-	</iframe>
-</div>
+  function _t(t) {
+    return container.getElementsByTagName(t)[0];
+  }
+
+  function _c(c) {
+    return container.getElementsByClassName(c)[0];
+  }
+  var map = L.map(mapid, {
+    scrollWheelZoom: false
+  });
+  L.tileLayer('{{.Site.Params.mapLayer}}', {
+    attribution: '{{.Site.Params.mapAttribution}}'
+  }).addTo(map);
+  var control = L.control.layers(null, null).addTo(map);
+  new L.GPX(url, {
+    async: true,
+    marker_options: {
+      startIconUrl: '/images/pin-icon-start.png',
+      endIconUrl: '/images/pin-icon-end.png',
+      shadowUrl: '/images/pin-shadow.png',
+    },
+  }).on('loaded', function(e) {
+    var gpx = e.target;
+    map.fitBounds(gpx.getBounds());
+    control.addOverlay(gpx, gpx.get_name());
+    var date = gpx.get_start_time();
+    var datestring = date.getFullYear() + "-" + (date.getMonth()+1).toString().padStart(2, '0') + "-" + date.getDate().toString().padStart(2, '0')  + " " + date.getHours().toString().padStart(2, '0') + ":" + date.getMinutes().toString().padStart(2, '0');
+    _c('start').textContent = datestring;
+    _c('distance').textContent = (gpx.get_distance() / 1000).toFixed(2);
+    _c('duration').textContent = gpx.get_duration_string(gpx.get_moving_time());
+    _c('elevation-gain').textContent = gpx.get_elevation_gain().toFixed(0);
+    _c('elevation-loss').textContent = gpx.get_elevation_loss().toFixed(0);
+    _c('elevation-net').textContent = (gpx.get_elevation_gain() -
+      gpx.get_elevation_loss()).toFixed(0);
+  }).addTo(map);
+</script>
