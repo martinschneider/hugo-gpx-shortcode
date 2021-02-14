@@ -74,6 +74,9 @@
   }).addTo(map);
   var control = L.control.layers(null, null).addTo(map);
   new L.GPX(url, {
+    gpx_options: {
+      joinTrackSegments: false
+    },
     async: true,
     marker_options: {
       startIconUrl: '/images/pin-icon-start.png',
