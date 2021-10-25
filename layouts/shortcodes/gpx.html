@@ -34,6 +34,9 @@
   .gpx {
     box-sizing: unset
   }
+ .leaflet-container a.location {
+    font-size: 1.1rem;
+  }
 </style>
 <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js" integrity="sha512-gZwIG9x3wUXg2hdXF6+rVkLF/0Vi9U8D2Ntg4Ga5I5BZpVkVxlJWbSQtXPSiUTtC0TjtGOmxa1AJPuV0CPthew==" crossorigin=""></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-gpx/1.5.0/gpx.min.js"></script>
@@ -55,9 +58,9 @@
   {{ end }}
 </section>
 <script>
-  var url = '/gpx/{{.Get "id" }}.gpx';
-  var mapid = 'map-{{.Get "id" }}';
-  var container = document.getElementById('container');
+  var url = "/gpx/{{.Get "id" }}.gpx";
+  var mapid = "map-{{.Get "id" }}";
+  var container = document.getElementById("container");
 
   function _t(t) {
     return container.getElementsByTagName(t)[0];
@@ -69,8 +72,8 @@
   var map = L.map(mapid, {
     scrollWheelZoom: false
   });
-  L.tileLayer('{{.Site.Params.mapLayer}}', {
-    attribution: '{{.Site.Params.mapAttribution}}'
+  L.tileLayer("{{.Site.Params.mapLayer}}", {
+    attribution: "{{.Site.Params.mapAttribution}}"
   }).addTo(map);
   var control = L.control.layers(null, null).addTo(map);
   new L.GPX(url, {
@@ -79,22 +82,33 @@
     },
     async: true,
     marker_options: {
-      startIconUrl: '/images/pin-icon-start.png',
-      endIconUrl: '/images/pin-icon-end.png',
-      shadowUrl: '/images/pin-shadow.png',
+      startIconUrl: "/images/pin-icon-start.png",
+      endIconUrl: "/images/pin-icon-end.png",
+      shadowUrl: "/images/pin-shadow.png",
     },
-  }).on('loaded', function(e) {
+  }).on("loaded", function(e) {
     var gpx = e.target;
     map.fitBounds(gpx.getBounds());
     control.addOverlay(gpx, gpx.get_name());
     var date = gpx.get_start_time();
-    var datestring = date.getFullYear() + "-" + (date.getMonth()+1).toString().padStart(2, '0') + "-" + date.getDate().toString().padStart(2, '0')  + " " + date.getHours().toString().padStart(2, '0') + ":" + date.getMinutes().toString().padStart(2, '0');
-    _c('start').textContent = datestring;
-    _c('distance').textContent = (gpx.get_distance() / 1000).toFixed(2);
-    _c('duration').textContent = gpx.get_duration_string(gpx.get_moving_time());
-    _c('elevation-gain').textContent = gpx.get_elevation_gain().toFixed(0);
-    _c('elevation-loss').textContent = gpx.get_elevation_loss().toFixed(0);
-    _c('elevation-net').textContent = (gpx.get_elevation_gain() -
+    var datestring = date.getFullYear() + "-" + (date.getMonth()+1).toString().padStart(2, "0") + "-" + date.getDate().toString().padStart(2, "0")  + " " + date.getHours().toString().padStart(2, "0") + ":" + date.getMinutes().toString().padStart(2, "0");
+    _c("start").textContent = datestring;
+    _c("distance").textContent = (gpx.get_distance() / 1000).toFixed(2);
+    _c("duration").textContent = gpx.get_duration_string(gpx.get_moving_time());
+    _c("elevation-gain").textContent = gpx.get_elevation_gain().toFixed(0);
+    _c("elevation-loss").textContent = gpx.get_elevation_loss().toFixed(0);
+    _c("elevation-net").textContent = (gpx.get_elevation_gain() -
       gpx.get_elevation_loss()).toFixed(0);
   }).addTo(map);
+  document.addEventListener("DOMContentLoaded", function(){
+    Array.from(document.getElementsByClassName("location")).forEach(addMarker);
+  });
+
+  function addMarker(link) {
+    lat=link.toString().match(/mlat=([0-9\.;]+)/)[1];
+    lon=link.toString().match(/mlon=([0-9\.;]+)/)[1];
+    title=link.toString();
+    marker=L.marker([lat, lon]).addTo(map);
+    marker.bindPopup(link).openPopup();
+  }
 </script>
