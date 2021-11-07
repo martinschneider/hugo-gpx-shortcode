@@ -1,3 +1,5 @@
+<!-- TODO: allow multiple maps to be displayed on the same page -->
+
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css" integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ==" crossorigin="" />
 <style type="text/css">
   .gpx {
@@ -47,11 +49,11 @@
   {{ if or ( eq (.Get "footer") "true" ) ( eq (.Get "footer") "" )}}
   <footer>
     <ul class="info">
-      <li><span class="start"></span></li>&mdash;<li>Distance:&nbsp;<span class="distance"></span>&nbsp;km</li>
-      &mdash; <li>Duration:&nbsp;<span class="duration"></span></li>
-      &mdash; <li>Elevation:&nbsp;+<span class="elevation-gain"></span>&nbsp;m,
-        -<span class="elevation-loss"></span>&nbsp;m
-        (net:&nbsp;<span class="elevation-net"></span>&nbsp;m)</li>
+      <li><span class="start-{{.Get "id" }}"></span></li>&mdash;<li>Distance:&nbsp;<span class="distance-{{.Get "id" }}"></span>&nbsp;km</li>
+      &mdash; <li>Duration:&nbsp;<span class="duration-{{.Get "id" }}"></span></li>
+      &mdash; <li>Elevation:&nbsp;+<span class="elevation-gain-{{.Get "id" }}"></span>&nbsp;m,
+        -<span class="elevation-loss-{{.Get "id" }}"></span>&nbsp;m
+        (net:&nbsp;<span class="elevation-net-{{.Get "id" }}"></span>&nbsp;m)</li>
       &mdash;<li><a href="/gpx/{{.Get "id" }}.gpx">Download</a></li>
     </ul>
   </footer>
@@ -61,10 +63,6 @@
   var url = "/gpx/{{.Get "id" }}.gpx";
   var mapid = "map-{{.Get "id" }}";
   var container = document.getElementById("container");
-
-  function _t(t) {
-    return container.getElementsByTagName(t)[0];
-  }
 
   function _c(c) {
     return container.getElementsByClassName(c)[0];
@@ -92,12 +90,12 @@
     control.addOverlay(gpx, gpx.get_name());
     var date = gpx.get_start_time();
     var datestring = date.getFullYear() + "-" + (date.getMonth()+1).toString().padStart(2, "0") + "-" + date.getDate().toString().padStart(2, "0")  + " " + date.getHours().toString().padStart(2, "0") + ":" + date.getMinutes().toString().padStart(2, "0");
-    _c("start").textContent = datestring;
-    _c("distance").textContent = (gpx.get_distance() / 1000).toFixed(2);
-    _c("duration").textContent = gpx.get_duration_string(gpx.get_moving_time());
-    _c("elevation-gain").textContent = gpx.get_elevation_gain().toFixed(0);
-    _c("elevation-loss").textContent = gpx.get_elevation_loss().toFixed(0);
-    _c("elevation-net").textContent = (gpx.get_elevation_gain() -
+    _c("start-{{.Get "id" }}").textContent = datestring;
+    _c("distance-{{.Get "id" }}").textContent = (gpx.get_distance() / 1000).toFixed(2);
+    _c("duration-{{.Get "id" }}").textContent = gpx.get_duration_string(gpx.get_moving_time());
+    _c("elevation-gain-{{.Get "id" }}").textContent = gpx.get_elevation_gain().toFixed(0);
+    _c("elevation-loss-{{.Get "id" }}").textContent = gpx.get_elevation_loss().toFixed(0);
+    _c("elevation-net-{{.Get "id" }}").textContent = (gpx.get_elevation_gain() -
       gpx.get_elevation_loss()).toFixed(0);
   }).addTo(map);
   document.addEventListener("DOMContentLoaded", function(){
