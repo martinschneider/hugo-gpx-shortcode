@@ -103,10 +103,17 @@
   });
 
   function addMarker(link) {
-    lat=link.toString().match(/mlat=([0-9\.;]+)/)[1];
-    lon=link.toString().match(/mlon=([0-9\.;]+)/)[1];
-    title=link.toString();
-    marker=L.marker([lat, lon]).addTo(map);
-    marker.bindPopup(link).openPopup();
+    lat = link.getAttribute("lat");
+    lon = link.getAttribute("lon");
+    text = link.textContent;
+    name = link.getAttribute("name");
+    title = (name != "") ? name : text;
+    url = link.getAttribute("link");
+    if (url != "")
+    {
+      title = "<a target=\"_blank\" href=\"" + url + "\">" + title + "</a>";
+    }
+    marker = L.marker([lat, lon]).addTo(map);
+    marker.bindPopup(title).openPopup();
   }
 </script>
