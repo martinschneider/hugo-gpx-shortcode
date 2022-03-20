@@ -41,7 +41,7 @@
     font-size: 1.1rem;
   }
 </style>
-<script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js" integrity="sha512-gZwIG9x3wUXg2hdXF6+rVkLF/0Vi9U8D2Ntg4Ga5I5BZpVkVxlJWbSQtXPSiUTtC0TjtGOmxa1AJPuV0CPthew==" crossorigin=""></script>
+<script src="/leaflet-src.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-gpx/1.5.0/gpx.min.js"></script>
 <section id="container" class="gpx">
   <article>
@@ -61,45 +61,7 @@
   {{ end }}
 </section>
 <script>
-
-// TODO: create a PR for this in Leaflet
-L.ExtendedTileLayer = L.TileLayer.extend({
-    _isValidTile: function (coords) {
-        var crs = this._map.options.crs;
-
-        if (!crs.infinite) {
-            // don't load tile if it's out of bounds and not wrapped
-
-            /*
-             * this._globalTileRange is not defined
-             * not quite sure why
-             */
-            var globalTileRange = this._map.getPixelWorldBounds( coords.z );
-
-            var bounds = globalTileRange;
-            if ((!crs.wrapLng && (coords.x < bounds.min.x || coords.x > bounds.max.x)) ||
-                (!crs.wrapLat && (coords.y < bounds.min.y || coords.y > bounds.max.y))) { return false; }
-        }
-
-        var tileBounds = this._tileCoordsToBounds(coords);
-
-        // don't load tile if it doesn't intersect the bounds in options
-        if (this.options.bounds &&
-            ! L.latLngBounds(this.options.bounds).intersects(tileBounds)) {
-            return false;
-        }
-
-        // don't load tile if it does intersect the hole in options
-        if (this.options.inverseBounds &&
-            L.latLngBounds(this.options.inverseBounds).intersects(tileBounds)) {
-            return false;
-        }
-
-        return true;
-    },
-});
-
-  var url = "/gpx/{{.Get "id" }}.gpx";
+  var url = "{{.Get "id" }}.gpx";
   var mapid = "map-{{.Get "id" }}";
   var container = document.getElementById("container");
 
@@ -109,7 +71,7 @@ L.ExtendedTileLayer = L.TileLayer.extend({
   var map = L.map(mapid, {
     scrollWheelZoom: false
   });
-  var thunderforest = new L.ExtendedTileLayer('https://tile.thunderforest.com/outdoors/{z}/{x}/{y}{r}.png?apikey=3bc0443f64f94d3a9318f9e887561ea5', {
+  var thunderforest = new L.TileLayer('https://tile.thunderforest.com/outdoors/{z}/{x}/{y}{r}.png?apikey=3bc0443f64f94d3a9318f9e887561ea5', {
     attribution: 'Maps © <a href=\"http://www.thunderforest.com\">Thunderforest</a>, Data © <a href=\"http://www.openstreetmap.org/copyright\">OpenStreetMap contributors</a>"', minZoom: 11, inverseBounds: L.latLngBounds(
     new L.LatLng(46.3, 9.3),
     new L.LatLng(49, 17.3)
