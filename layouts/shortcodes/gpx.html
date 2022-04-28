@@ -44,9 +44,7 @@
 <script src="/leaflet-src.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-gpx/1.5.0/gpx.min.js"></script>
 <section id="container" class="gpx">
-  <article>
-    <div class="map" id="map-{{.Get "id" }}"></div>
-  </article>
+  <div class="map" id="map-{{.Get "id" }}"></div>
   {{ if or ( eq (.Get "footer") "true" ) ( eq (.Get "footer") "" )}}
   <footer>
     <ul class="info">
@@ -55,7 +53,7 @@
       &mdash; <li>Elevation:&nbsp;+<span class="elevation-gain-{{.Get "id" }}"></span>&nbsp;m,
         -<span class="elevation-loss-{{.Get "id" }}"></span>&nbsp;m
         (net:&nbsp;<span class="elevation-net-{{.Get "id" }}"></span>&nbsp;m)</li>
-      &mdash;<li><a href="/gpx/{{.Get "id" }}.gpx">Download</a></li>
+      &mdash;<li><a href="{{.Get "id" }}.gpx">Download</a></li>
     </ul>
   </footer>
   {{ end }}
