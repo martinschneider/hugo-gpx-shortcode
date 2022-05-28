@@ -51,44 +51,29 @@
     {{ range .Params }}
       <ul class="info">
         {{- $.Scratch.Set "counter" (add ($.Scratch.Get "counter") 1) }}
-        <li>{{ if gt $len 1 }}Track {{$.Scratch.Get "counter" }}: {{ end }}<span class="start-{{ . }}"></span></li>&mdash;<li>Distance:&nbsp;<span class="distance-{{ . }}"></span>&nbsp;km</li>
-        &mdash; <li>Duration:&nbsp;<span class="duration-{{ . }}"></span></li>
-        &mdash; <li>Elevation:&nbsp;+<span class="elevation-gain-{{ . }}"></span>&nbsp;m,
-        -<span class="elevation-loss-{{ . }}"></span>&nbsp;m
-        (net:&nbsp;<span class="elevation-net-{{ . }}"></span>&nbsp;m)</li>
-        &mdash;<li><a href="{{ . }}">Download</a></li>
+        <li>{{ if gt $len 1 }}Track {{$.Scratch.Get "counter" }}: {{ end }}</li>
+        <li class="start-{{ . }}"></li>
+        <li class="distance-{{ . }}"></li>
+        <li class="duration-{{ . }}"></li>
+        <li class="elevation-{{ . }}"></li>
+        <li><a href="{{ . }}">Download</a></li>
       </ul>
     {{ end }}
   </footer>
 </section>
 <script>
+  // TODO the String manipulation feels unnecessary to do in the JS code?
   var urls = "{{ .Params }}".replaceAll('[','').replaceAll(']','').split(' ');
   var mapid = "map-{{.Get "id" }}";
   var container = document.getElementById("container");
   var colors = {{ site.Params.gpx.colors }};
-  function _c(c) {
-    return container.getElementsByClassName(c)[0];
-  }
-  var map = L.map(mapid, {
-    scrollWheelZoom: false
-  });
-  var thunderforest = new L.TileLayer('https://tile.thunderforest.com/outdoors/{z}/{x}/{y}{r}.png?apikey=3bc0443f64f94d3a9318f9e887561ea5', {
-    attribution: 'Maps © <a href=\"http://www.thunderforest.com\">Thunderforest</a>, Data © <a href=\"http://www.openstreetmap.org/copyright\">OpenStreetMap contributors</a>"', minZoom: 11, inverseBounds: L.latLngBounds(
-    new L.LatLng(46.3, 9.3),
-    new L.LatLng(49, 17.3)
-    )
-  });
-  var bergfex = L.tileLayer('https://maps.bergfex.at/oek/{folder}/{z}/{x}/{y}.jpg', {
-    attribution: 'Maps © <a href="http://bergfex.com">bergfex.com</a>', minZoom: 9, maxZoom:13, bounds: new L.LatLngBounds(
-    new L.LatLng(46.3, 9.3),
-    new L.LatLng(49, 17.3)
-  ),
-  folder: function (data) {
-    return data.z <= 15 ? '512px' : 'standard';
-  },
-  });
-  thunderforest.addTo(map);
-  bergfex.addTo(map);
+    
+  // Create map and layers
+  var map = L.map(mapid, { fullscreenControl: true, scrollWheelZoom: false });
+  {{ range site.Params.gpx.layers }}
+  createLayer({{ .url }}, {{ .attribution | default "" }}, {{ .minZoom | default 1 }}, {{ .maxZoom | default 20}}, {{ .bounds }}, {{ .inverseBounds }}).addTo(map);
+  {{ end }}
+
   var control = L.control.layers(null, null).addTo(map);
   var bounds = null;
   urls.forEach(function(url, index) {
@@ -102,6 +87,7 @@
         endIconUrl: "/images/pin-icon-end.png",
         shadowUrl: "/images/pin-shadow.png",
       },
+      // looping through all specified colours
       polyline_options: {color: colors[index % colors.length]}
     }).on("loaded", function(e) {
       var gpx = e.target;
@@ -114,21 +100,34 @@
       }
       map.fitBounds(bounds);
       control.addOverlay(gpx, gpx.get_name());
-      var date = gpx.get_start_time();
-      var datestring = date.getFullYear() + "-" + (date.getMonth()+1).toString().padStart(2, "0") + "-" + date.getDate().toString().padStart(2, "0")  + " " + date.getHours().toString().padStart(2, "0") + ":" + date.getMinutes().toString().padStart(2, "0");
-      _c("start-" + url).textContent = (date > 0) ? datestring : "";
-      _c("distance-" + url).textContent = (gpx.get_distance() / 1000).toFixed(2);
-      var duration = gpx.get_moving_time();
-      _c("duration-" + url).textContent = (duration > 0) ? gpx.get_duration_string(duration) : "N/A";
-      _c("elevation-gain-"+ url).textContent = gpx.get_elevation_gain().toFixed(0);
-      _c("elevation-loss-" + url).textContent = gpx.get_elevation_loss().toFixed(0);
-      _c("elevation-net-" + url).textContent = (gpx.get_elevation_gain() - gpx.get_elevation_loss()).toFixed(0);
+      addMetadata(gpx, url);
     }).addTo(map);
   });
+  
+  // Markers are read from the DOM, e.g. <span class="location" lat="23.50847" lon="120.80161" name="" link="">Alishan Transport Station</span>
+  // TODO: The more elegant way would be to pass the markers as parameters to the shortcode.
   document.addEventListener("DOMContentLoaded", function(){
     Array.from(document.getElementsByClassName("location")).forEach(addMarker);
   });
+  
+  // Create a map layer
+  function createLayer(url, attribution, minZoom, maxZoom, bounds, inverseBounds) {
+    var layer = L.tileLayer(url, { attribution: attribution, minZoom: minZoom, maxZoom: maxZoom});
+    if (bounds != null) {
+      // TODO For now, we only support LatLngBounds
+      layer.options.bounds = new L.LatLngBounds(
+        new L.LatLng(bounds[0], bounds[1]),
+        new L.LatLng(bounds[2], bounds[3]));
+    }
+    if (inverseBounds != null) {
+      layer.options.inverseBounds = new L.LatLngBounds(
+        new L.LatLng(inverseBounds[0], inverseBounds[1]),
+        new L.LatLng(inverseBounds[2], inverseBounds[3]));
+    }
+    return layer;
+  }
 
+  // Add a marker to the map
   function addMarker(link) {
     lat = link.getAttribute("lat");
     lon = link.getAttribute("lon");
@@ -142,5 +141,21 @@
     }
     marker = L.marker([lat, lon]).addTo(map);
     marker.bindPopup(title).openPopup();
+  }
+  
+  // Add metadata to footer
+  function addMetadata(gpx, url) {
+    var date = gpx.get_start_time();
+    var datestring = date.getFullYear() + "-" + (date.getMonth()+1).toString().padStart(2, "0") + "-" + date.getDate().toString().padStart(2, "0")  + " " + date.getHours().toString().padStart(2, "0") + ":" + date.getMinutes().toString().padStart(2, "0");
+    _c("start-" + url).textContent = (date > 0) ? datestring : "";
+    _c("distance-" + url).textContent = "Distance: " + (gpx.get_distance() / 1000).toFixed(2);
+    var duration = gpx.get_moving_time();
+    _c("duration-" + url).textContent = (duration > 0) ? "Duration: " + gpx.get_duration_string(duration) : "";
+    _c("elevation-"+ url).textContent = `Elevation: ${gpx.get_elevation_gain().toFixed(0)} m, -${gpx.get_elevation_loss().toFixed(0)} m, net:  ${(gpx.get_elevation_gain() - gpx.get_elevation_loss()).toFixed(0)}  m`;
+  }
+  
+  // Helper method to get DOM element by class
+  function _c(c) {
+    return container.getElementsByClassName(c)[0];
   }
 </script>
