@@ -50,6 +50,9 @@
     {{ $len := len .Params }}
     {{ range .Params }}
       <ul class="info">
+        <li><input type="checkbox" checked class="tracks" track-id="{{ $.Scratch.Get "counter" }}"/></li>
+        <li style="color:{{ index site.Params.gpx.colors (mod ($.Scratch.Get "counter") (len site.Params.gpx.colors))}}">&#9632;</li>
+        <!-- label indices start from 1 -->
         {{- $.Scratch.Set "counter" (add ($.Scratch.Get "counter") 1) }}
         <li>{{ if gt $len 1 }}Track {{$.Scratch.Get "counter" }}: {{ end }}</li>
         <li class="start-{{ . }}"></li>
@@ -67,6 +70,7 @@
   var mapid = "map-{{.Get "id" }}";
   var container = document.getElementById("container");
   var colors = {{ site.Params.gpx.colors }};
+  var layers = new Array();
     
   // Create map and layers
   var map = L.map(mapid, { fullscreenControl: true, scrollWheelZoom: false });
@@ -77,7 +81,32 @@
   var control = L.control.layers(null, null).addTo(map);
   var bounds = null;
   urls.forEach(function(url, index) {
-    new L.GPX(url, {
+    addTrack(urls[index], index, map);
+  });
+  
+  // Markers are read from the DOM, e.g. <span class="location" lat="23.50847" lon="120.80161" name="" link="">Alishan Transport Station</span>
+  // TODO: The more elegant way would be to pass the markers as parameters to the shortcode.
+  document.addEventListener("DOMContentLoaded", function(){
+    Array.from(document.getElementsByClassName("location")).forEach(addMarker);
+    document.querySelectorAll(".tracks").forEach(function(item) {
+      item.checked = true;
+    });
+  });
+  
+  document.querySelectorAll(".tracks").forEach(function(item) {
+    item.addEventListener("click", function() {
+      var id = this.getAttribute("track-id");
+      if (event.currentTarget.checked) {
+        showTrack(id);
+      } else {
+        hideTrack(id);
+      }
+    })
+  });
+  
+  // Add a track to the map
+  function addTrack(url, index, map) {
+    layers[index]=new L.GPX(url, {
       gpx_options: {
         joinTrackSegments: false
       },
@@ -101,14 +130,17 @@
       map.fitBounds(bounds);
       control.addOverlay(gpx, gpx.get_name());
       addMetadata(gpx, url);
-    }).addTo(map);
-  });
+    });
+    layers[index].addTo(map);
+  }
   
-  // Markers are read from the DOM, e.g. <span class="location" lat="23.50847" lon="120.80161" name="" link="">Alishan Transport Station</span>
-  // TODO: The more elegant way would be to pass the markers as parameters to the shortcode.
-  document.addEventListener("DOMContentLoaded", function(){
-    Array.from(document.getElementsByClassName("location")).forEach(addMarker);
-  });
+  function showTrack(id) {
+    layers[id].setStyle({opacity: 1})
+  }
+  
+  function hideTrack(id) {
+    layers[id].setStyle({opacity: 0})
+  }
   
   // Create a map layer
   function createLayer(url, attribution, minZoom, maxZoom, bounds, inverseBounds) {
