@@ -1,57 +1,21 @@
-<!-- TODO: allow multiple maps to be displayed on the same page -->
+{{/* TODO: allow multiple maps to be displayed on the same page */}}
 
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css" integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ==" crossorigin="" />
-<style type="text/css">
-  .gpx {
-    border: 1px #aaa solid;
-    max-width: 100%;
-    margin: 1em auto;
-  }
-  .gpx .map {
-    border: 1px #888 solid;
-    border-left: none;
-    border-right: none;
-    width: 100%;
-    min-height: 800px;
-    margin: 0;
-    z-index: 0;
-  }
-  .gpx footer {
-    background: #f0f0f0;
-    padding: 0.5em;
-  }
-  .gpx ul.info {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    font-size: smaller;
-  }
-  .gpx ul.info li {
-    color: #666;
-    padding: 2px;
-    display: inline;
-  }
-  .gpx ul.info li span {
-    color: black;
-  }
-  .gpx {
-    box-sizing: unset
-  }
- .leaflet-container a.location {
-    font-size: 1.1rem;
-  }
-</style>
-<script src="/leaflet-src.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-gpx/1.5.0/gpx.min.js"></script>
+<link rel="stylesheet" href="{{ site.Params.gpx.leafletCSS | default "https://unpkg.com/leaflet@1.6.0/dist/leaflet.css" }}" crossorigin="" />
+<link rel="stylesheet" href="{{ "/gpx-shortcode/style.css" | relURL }}" />
+<script src="{{ "/gpx-shortcode/leaflet-src.js" | relURL }}"></script>
+<script src="{{ site.Params.gpx.leafletGpxJS | default "https://cdnjs.cloudflare.com/ajax/libs/leaflet-gpx/1.5.0/gpx.min.js" }}"></script>
+
+{{/* HTML scaffolding. Content will be loaded in the JS below */}}
 <section id="container" class="gpx">
   <div class="map" id="map-{{.Get "id" }}"></div>
   <footer>
     {{- $.Scratch.Set "counter" 0 }}
     {{ $len := len .Params }}
+    {{ $colors := site.Params.gpx.trackColors | default (slice "blue" "darkblue" "purple")}}
     {{ range .Params }}
       <ul class="info">
         <li><input type="checkbox" checked class="tracks" track-id="{{ $.Scratch.Get "counter" }}"/></li>
-        <li style="color:{{ index site.Params.gpx.colors (mod ($.Scratch.Get "counter") (len site.Params.gpx.colors))}}">&#9632;</li>
+        <li style="color:{{ index $colors (mod ($.Scratch.Get "counter") (len $colors))}}">&#9632;</li>
         <!-- label indices start from 1 -->
         {{- $.Scratch.Set "counter" (add ($.Scratch.Get "counter") 1) }}
         <li>{{ if gt $len 1 }}Track {{$.Scratch.Get "counter" }}: {{ end }}</li>
@@ -64,17 +28,24 @@
     {{ end }}
   </footer>
 </section>
+
 <script>
-  // TODO the String manipulation feels unnecessary to do in the JS code?
-  var urls = "{{ .Params }}".replaceAll('[','').replaceAll(']','').split(' ');
+  var urls = new Array({{ range .Params }}{{ . }},{{ end }})
   var mapid = "map-{{.Get "id" }}";
   var container = document.getElementById("container");
-  var colors = {{ site.Params.gpx.colors }};
+  var colors = {{ site.Params.gpx.trackColors | default (slice "blue" "darkblue" "purple")}};
   var layers = new Array();
     
   // Create map and layers
   var map = L.map(mapid, { fullscreenControl: true, scrollWheelZoom: false });
-  {{ range site.Params.gpx.layers }}
+  {{ $layers := site.Params.gpx.layers }}
+  
+  // If no layers are specified fall back to default (OpenStreetMap)
+  {{ if eq $layers nil }}
+  {{ $layers = site.Params.gpx.layers | append (dict "url" "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" "attribution" "© <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a> contributors") }}
+  {{ end }}
+  
+  {{ range $layers }}
   createLayer({{ .url }}, {{ .attribution | default "" }}, {{ .minZoom | default 1 }}, {{ .maxZoom | default 20}}, {{ .bounds }}, {{ .inverseBounds }}).addTo(map);
   {{ end }}
 
@@ -84,15 +55,19 @@
     addTrack(urls[index], index, map);
   });
   
-  // Markers are read from the DOM, e.g. <span class="location" lat="23.50847" lon="120.80161" name="" link="">Alishan Transport Station</span>
-  // TODO: The more elegant way would be to pass the markers as parameters to the shortcode.
+  
   document.addEventListener("DOMContentLoaded", function(){
+    // (Optional) markers are read from the DOM, e.g. <span class="location" lat="23.50847" lon="120.80161" name="" link="">Alishan Transport Station</span>
+    // TODO: The more elegant way would be passing the markers as parameters to the shortcode.
     Array.from(document.getElementsByClassName("location")).forEach(addMarker);
+    
+    // At first all tracks are visible
     document.querySelectorAll(".tracks").forEach(function(item) {
       item.checked = true;
     });
   });
   
+  // Event listeners to toggle visibility of each track
   document.querySelectorAll(".tracks").forEach(function(item) {
     item.addEventListener("click", function() {
       var id = this.getAttribute("track-id");
@@ -112,9 +87,9 @@
       },
       async: true,
       marker_options: {
-        startIconUrl: "/images/pin-icon-start.png",
-        endIconUrl: "/images/pin-icon-end.png",
-        shadowUrl: "/images/pin-shadow.png",
+        startIconUrl: "/gpx-shortcode/pin-icon-start.png",
+        endIconUrl: "/gpx-shortcode/pin-icon-end.png",
+        shadowUrl: "/gpx-shortcode/pin-shadow.png",
       },
       // looping through all specified colours
       polyline_options: {color: colors[index % colors.length]}
