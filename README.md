@@ -13,8 +13,8 @@ This shortcode displays GPX tracks on a map using the [Leaflet library](https://
 ```
 [params.gpx]
   leafletJS = "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.8.0/leaflet-src.min.js"
-  leafletGpxJS = "https://cdnjs.cloudflare.com/ajax/libs/leaflet-gpx/1.5.0/gpx.min.js"
-  leafletCSS = "https://unpkg.com/leaflet@1.6.0/dist/leaflet.css"
+  leafletGpxJS = "https://cdnjs.cloudflare.com/ajax/libs/leaflet-gpx/1.7.0/gpx.min.js"
+  leafletCSS = "https://unpkg.com/leaflet@1.8.0/dist/leaflet.css"
   trackColors = ["blue", "darkblue", "purple"]
   layers = [ { url = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", attribution = "(c) <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors" } ]
 ```

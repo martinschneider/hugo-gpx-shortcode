@@ -1,9 +1,12 @@
 {{/* TODO: allow multiple maps to be displayed on the same page */}}
 
-<link rel="stylesheet" href="{{ site.Params.gpx.leafletCSS | default "https://unpkg.com/leaflet@1.6.0/dist/leaflet.css" }}" crossorigin="" />
+<link rel="stylesheet" href="{{ site.Params.gpx.leafletCSS | default ("/gpx-shortcode/leaflet/leaflet.css" | relURL) }}" crossorigin="" />
 <link rel="stylesheet" href="{{ "/gpx-shortcode/style.css" | relURL }}" />
-<script src="{{ "/gpx-shortcode/leaflet-src.js" | relURL }}"></script>
-<script src="{{ site.Params.gpx.leafletGpxJS | default "https://cdnjs.cloudflare.com/ajax/libs/leaflet-gpx/1.5.0/gpx.min.js" }}"></script>
+<link rel="stylesheet" href="{{ "/gpx-shortcode/leaflet-distance-marker.css" | relURL }}" />
+<script src="{{ "/gpx-shortcode/leaflet/leaflet.js" | relURL }}"></script>
+<script src="{{ "/gpx-shortcode/leaflet.geometryutil.js" | relURL }}"></script>
+<script src="{{ "/gpx-shortcode/leaflet-distance-marker.js" | relURL }}"></script>
+<script src="{{ site.Params.gpx.leafletGpxJS | default "https://cdnjs.cloudflare.com/ajax/libs/leaflet-gpx/1.7.0/gpx.min.js" }}"></script>
 
 {{/* HTML scaffolding. Content will be loaded in the JS below */}}
 <section id="container" class="gpx">
@@ -92,7 +95,7 @@
         shadowUrl: "/gpx-shortcode/pin-shadow.png",
       },
       // looping through all specified colours
-      polyline_options: {color: colors[index % colors.length]}
+      polyline_options: {color: colors[index % colors.length], distanceMarkers: true, smoothFactor: 0.5 }
     }).on("loaded", function(e) {
       var gpx = e.target;
       if (bounds === null) {
@@ -155,7 +158,7 @@
     var date = gpx.get_start_time();
     var datestring = date.getFullYear() + "-" + (date.getMonth()+1).toString().padStart(2, "0") + "-" + date.getDate().toString().padStart(2, "0")  + " " + date.getHours().toString().padStart(2, "0") + ":" + date.getMinutes().toString().padStart(2, "0");
     _c("start-" + url).textContent = (date > 0) ? datestring : "";
-    _c("distance-" + url).textContent = "Distance: " + (gpx.get_distance() / 1000).toFixed(2);
+    _c("distance-" + url).textContent = "Distance: " + (gpx.get_distance() / 1000).toFixed(2) + " km";
     var duration = gpx.get_moving_time();
     _c("duration-" + url).textContent = (duration > 0) ? "Duration: " + gpx.get_duration_string(duration) : "";
     _c("elevation-"+ url).textContent = `Elevation: ${gpx.get_elevation_gain().toFixed(0)} m, -${gpx.get_elevation_loss().toFixed(0)} m, net:  ${(gpx.get_elevation_gain() - gpx.get_elevation_loss()).toFixed(0)}  m`;

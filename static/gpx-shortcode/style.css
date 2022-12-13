@@ -1,38 +1,38 @@
 .gpx {
-    border: 1px #aaa solid;
-    max-width: 100%;
-    margin: 1em auto;
-  }
-  .gpx .map {
-    border: 1px #888 solid;
-    border-left: none;
-    border-right: none;
-    width: 100%;
-    min-height: 800px;
-    margin: 0;
-    z-index: 0;
-  }
-  .gpx footer {
-    background: #f0f0f0;
-    padding: 0.5em;
-  }
-  .gpx ul.info {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    font-size: smaller;
-  }
-  .gpx ul.info li {
-    color: #666;
-    padding: 2px;
-    display: inline;
-  }
-  .gpx ul.info li span {
-    color: black;
-  }
-  .gpx {
-    box-sizing: unset
-  }
+     border: 1px #aaa solid;
+     max-width: 100%;
+     margin: 1em auto;
+}
+ .gpx .map {
+     border: 1px #888 solid;
+     border-left: none;
+     border-right: none;
+     width: 100%;
+     min-height: 800px;
+     margin: 0;
+     z-index: 0;
+}
+ .gpx footer {
+     background: #f0f0f0;
+     padding: 0.5em;
+}
+ .gpx ul.info {
+     list-style: none;
+     margin: 0;
+     padding: 0;
+     font-size: smaller;
+}
+ .gpx ul.info li {
+     color: #666;
+     padding: 2px;
+     display: inline;
+}
+ .gpx ul.info li span {
+     color: black;
+}
+ .gpx {
+     box-sizing: unset 
+}
  .leaflet-container a.location {
-    font-size: 1.1rem;
-  }
+     font-size: 1.1rem;
+}
