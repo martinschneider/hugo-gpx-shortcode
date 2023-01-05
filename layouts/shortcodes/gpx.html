@@ -113,11 +113,11 @@
   }
   
   function showTrack(id) {
-    layers[id].setStyle({opacity: 1})
+    layers[id].addTo(map);
   }
   
   function hideTrack(id) {
-    layers[id].setStyle({opacity: 0})
+    layers[id].removeFrom(map);
   }
   
   // Create a map layer
