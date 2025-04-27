@@ -27,3 +27,6 @@ I use this shortcode on [my blog](https://www.grainsofsand.at).
 
 ## Support
 Please feel free to submit pull requests to improve this shortcode.
+
+## Donate
+[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/yellow_img.png)](https://www.buymeacoffee.com/mschneider)
