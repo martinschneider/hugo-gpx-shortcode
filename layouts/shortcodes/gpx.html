@@ -12,16 +12,16 @@
 <section id="container" class="gpx">
   <div class="map" id="map-{{.Get "id" }}"></div>
   <footer>
-    {{- $.Scratch.Set "counter" 0 }}
+    {{- $.Store.Set "counter" 0 }}
     {{ $len := len .Params }}
     {{ $colors := site.Params.gpx.trackColors | default (slice "blue" "darkblue" "purple")}}
     {{ range .Params }}
       <ul class="info">
-        <li><input type="checkbox" checked class="tracks" track-id="{{ $.Scratch.Get "counter" }}"/></li>
-        <li style="color:{{ index $colors (mod ($.Scratch.Get "counter") (len $colors))}}">&#9632;</li>
+        <li><input type="checkbox" checked class="tracks" track-id="{{ $.Store.Get "counter" }}"/></li>
+        <li style="color:{{ index $colors (mod ($.Store.Get "counter") (len $colors))}}">&#9632;</li>
         <!-- label indices start from 1 -->
-        {{- $.Scratch.Set "counter" (add ($.Scratch.Get "counter") 1) }}
-        <li>{{ if gt $len 1 }}Track {{$.Scratch.Get "counter" }}: {{ end }}</li>
+        {{- $.Store.Add "counter" 1 }}
+        <li>{{ if gt $len 1 }}Track {{$.Store.Get "counter" }}: {{ end }}</li>
         <li class="start-{{ . }}"></li>
         <li class="distance-{{ . }}"></li>
         <li class="duration-{{ . }}"></li>
