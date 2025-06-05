@@ -7,83 +7,9 @@
 <script src="{{ "/gpx-shortcode/leaflet.geometryutil.js" | relURL }}"></script>
 <script src="{{ "/gpx-shortcode/leaflet-distance-marker.js" | relURL }}"></script>
 <script src="{{ site.Params.gpx.leafletGpxJS | default "https://cdnjs.cloudflare.com/ajax/libs/leaflet-gpx/1.7.0/gpx.min.js" }}"></script>
-  {{ $.Page.Store.Set "initialized" "true" }}
-{{ end }}
-{{/* HTML scaffolding. Content will be loaded in the JS below */}}
-<section id="container" class="gpx">
-  <div class="map" id="map-{{.Get "id" }}"></div>
-  <footer>
-    {{- $.Store.Set "counter" 0 }}
-    {{ $len := len .Params }}
-    {{ $colors := site.Params.gpx.trackColors | default (slice "blue" "darkblue" "purple")}}
-    {{ range .Params }}
-      <ul class="info">
-        <li><input type="checkbox" checked class="tracks" track-id="{{ $.Store.Get "counter" }}"/></li>
-        <li style="color:{{ index $colors (mod ($.Store.Get "counter") (len $colors))}}">&#9632;</li>
-        <!-- label indices start from 1 -->
-        {{- $.Store.Add "counter" 1 }}
-        <li>{{ if gt $len 1 }}Track {{$.Store.Get "counter" }}: {{ end }}</li>
-        <li class="start-{{ . }}"></li>
-        <li class="distance-{{ . }}"></li>
-        <li class="duration-{{ . }}"></li>
-        <li class="elevation-{{ . }}"></li>
-        <li><a href="{{ . }}">Download</a></li>
-      </ul>
-    {{ end }}
-  </footer>
-</section>
 
 <script>
-  var urls = new Array({{ range .Params }}{{ . }},{{ end }})
-  var mapid = "map-{{.Get "id" }}";
-  var container = document.getElementById("container");
-  var colors = {{ site.Params.gpx.trackColors | default (slice "blue" "darkblue" "purple")}};
-  var layers = new Array();
-    
-  // Create map and layers
-  var map = L.map(mapid, { fullscreenControl: true, scrollWheelZoom: false });
-  {{ $layers := site.Params.gpx.layers }}
-  
-  // If no layers are specified fall back to default (OpenStreetMap)
-  {{ if eq $layers nil }}
-  {{ $layers = site.Params.gpx.layers | append (dict "url" "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" "attribution" "© <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a> contributors") }}
-  {{ end }}
-  
-  {{ range $layers }}
-  createLayer({{ .url }}, {{ .attribution | default "" }}, {{ .minZoom | default 1 }}, {{ .maxZoom | default 20}}, {{ .bounds }}, {{ .inverseBounds }}).addTo(map);
-  {{ end }}
-
-  var control = L.control.layers(null, null).addTo(map);
-  var bounds = null;
-  urls.forEach(function(url, index) {
-    addTrack(urls[index], index, map);
-  });
-  
-  
-  document.addEventListener("DOMContentLoaded", function(){
-    // (Optional) markers are read from the DOM, e.g. <span class="location" lat="23.50847" lon="120.80161" name="" link="">Alishan Transport Station</span>
-    // TODO: The more elegant way would be passing the markers as parameters to the shortcode.
-    Array.from(document.getElementsByClassName("location")).forEach(addMarker);
-    
-    // At first all tracks are visible
-    document.querySelectorAll(".tracks").forEach(function(item) {
-      item.checked = true;
-    });
-  });
-  
-  // Event listeners to toggle visibility of each track
-  document.querySelectorAll(".tracks").forEach(function(item) {
-    item.addEventListener("click", function() {
-      var id = this.getAttribute("track-id");
-      if (event.currentTarget.checked) {
-        showTrack(id);
-      } else {
-        hideTrack(id);
-      }
-    })
-  });
-  
-  // Add a track to the map
+// Add a track to the map
   function addTrack(url, index, map) {
     layers[index]=new L.GPX(url, {
       gpx_options: {
@@ -158,15 +84,92 @@
   function addMetadata(gpx, url) {
     var date = gpx.get_start_time();
     var datestring = date.getFullYear() + "-" + (date.getMonth()+1).toString().padStart(2, "0") + "-" + date.getDate().toString().padStart(2, "0")  + " " + date.getHours().toString().padStart(2, "0") + ":" + date.getMinutes().toString().padStart(2, "0");
-    _c("start-" + url).textContent = (date > 0) ? datestring : "";
-    _c("distance-" + url).textContent = "Distance: " + (gpx.get_distance() / 1000).toFixed(2) + " km";
+    _c(url, "start-" + url).textContent = (date > 0) ? datestring : "";
+    _c(url, "distance-" + url).textContent = "Distance: " + (gpx.get_distance() / 1000).toFixed(2) + " km";
     var duration = gpx.get_moving_time();
-    _c("duration-" + url).textContent = (duration > 0) ? "Duration: " + gpx.get_duration_string(duration) : "";
-    _c("elevation-"+ url).textContent = `Elevation: ${gpx.get_elevation_gain().toFixed(0)} m, -${gpx.get_elevation_loss().toFixed(0)} m, net:  ${(gpx.get_elevation_gain() - gpx.get_elevation_loss()).toFixed(0)}  m`;
+    _c(url, "duration-" + url).textContent = (duration > 0) ? "Duration: " + gpx.get_duration_string(duration) : "";
+    _c(url, "elevation-"+ url).textContent = `Elevation: ${gpx.get_elevation_gain().toFixed(0)} m, -${gpx.get_elevation_loss().toFixed(0)} m, net:  ${(gpx.get_elevation_gain() - gpx.get_elevation_loss()).toFixed(0)}  m`;
   }
   
   // Helper method to get DOM element by class
-  function _c(c) {
-    return container.getElementsByClassName(c)[0];
+  function _c(url, c) {
+    return document.getElementById("container-" + url).getElementsByClassName(c)[0];
   }
+</script>
+  {{ $.Page.Store.Set "initialized" "true" }}
+{{ end }}
+{{/* HTML scaffolding. Content will be loaded in the JS below */}}
+<section id="container-{{index .Params 0 }}" class="gpx">
+  <div class="map" id="map-{{index .Params 0 }}"></div>
+  <footer>
+    {{- $.Store.Set "counter" 0 }}
+    {{ $len := len .Params }}
+    {{ $colors := site.Params.gpx.trackColors | default (slice "blue" "darkblue" "purple")}}
+    {{ range .Params }}
+      <ul class="info">
+        <li><input type="checkbox" checked class="tracks" track-id="{{ $.Store.Get "counter" }}"/></li>
+        <li style="color:{{ index $colors (mod ($.Store.Get "counter") (len $colors))}}">&#9632;</li>
+        <!-- label indices start from 1 -->
+        {{- $.Store.Add "counter" 1 }}
+        <li>{{ if gt $len 1 }}Track {{$.Store.Get "counter" }}: {{ end }}</li>
+        <li class="start-{{ . }}"></li>
+        <li class="distance-{{ . }}"></li>
+        <li class="duration-{{ . }}"></li>
+        <li class="elevation-{{ . }}"></li>
+        <li><a href="{{ . }}">Download</a></li>
+      </ul>
+    {{ end }}
+  </footer>
+</section>
+
+<script>
+  var urls = new Array({{ range .Params }}{{ . }},{{ end }})
+  var map = document.getElementById("map-{{index .Params 0 }}");
+  var colors = {{ site.Params.gpx.trackColors | default (slice "blue" "darkblue" "purple")}};
+  var layers = new Array();
+    
+  // Create map and layers
+  var map = L.map(map, { fullscreenControl: true, scrollWheelZoom: false });
+  {{ $layers := site.Params.gpx.layers }}
+  
+  // If no layers are specified fall back to default (OpenStreetMap)
+  {{ if eq $layers nil }}
+  {{ $layers = site.Params.gpx.layers | append (dict "url" "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" "attribution" "© <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a> contributors") }}
+  {{ end }}
+  
+  {{ range $layers }}
+  createLayer({{ .url }}, {{ .attribution | default "" }}, {{ .minZoom | default 1 }}, {{ .maxZoom | default 20}}, {{ .bounds }}, {{ .inverseBounds }}).addTo(map);
+  {{ end }}
+
+  var control = L.control.layers(null, null).addTo(map);
+  var bounds = null;
+  urls.forEach(function(url, index) {
+    addTrack(urls[index], index, map);
+  });
+  
+  
+  document.addEventListener("DOMContentLoaded", function(){
+    // (Optional) markers are read from the DOM, e.g. <span class="location" lat="23.50847" lon="120.80161" name="" link="">Alishan Transport Station</span>
+    // TODO: The more elegant way would be passing the markers as parameters to the shortcode.
+    Array.from(document.getElementsByClassName("location")).forEach(addMarker);
+    
+    // At first all tracks are visible
+    document.querySelectorAll(".tracks").forEach(function(item) {
+      item.checked = true;
+    });
+  });
+  
+  // Event listeners to toggle visibility of each track
+  document.querySelectorAll(".tracks").forEach(function(item) {
+    item.addEventListener("click", function() {
+      var id = this.getAttribute("track-id");
+      if (event.currentTarget.checked) {
+        showTrack(id);
+      } else {
+        hideTrack(id);
+      }
+    })
+  });
+  
+  
 </script>
