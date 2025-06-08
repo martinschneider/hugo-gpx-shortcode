@@ -83,11 +83,10 @@
   // Add metadata to footer
   function addMetadata(gpx, url) {
     var date = gpx.get_start_time();
-    var datestring = date.getFullYear() + "-" + (date.getMonth()+1).toString().padStart(2, "0") + "-" + date.getDate().toString().padStart(2, "0")  + " " + date.getHours().toString().padStart(2, "0") + ":" + date.getMinutes().toString().padStart(2, "0");
+    var datestring = date.getFullYear() + "-" + (date.getMonth()+1).toString().padStart(2, "0") + "-" + date.getDate().toString().padStart(2, "0");
     _c(url, "start-" + url).textContent = (date > 0) ? datestring : "";
-    _c(url, "distance-" + url).textContent = "Distance: " + (gpx.get_distance() / 1000).toFixed(2) + " km";
+    _c(url, "distance-" + url).textContent = "Distance: " + (gpx.get_distance() / 1609.344).toFixed(2) + " mi";
     var duration = gpx.get_moving_time();
-    _c(url, "duration-" + url).textContent = (duration > 0) ? "Duration: " + gpx.get_duration_string(duration) : "";
     _c(url, "elevation-"+ url).textContent = `Elevation: ${gpx.get_elevation_gain().toFixed(0)} m, -${gpx.get_elevation_loss().toFixed(0)} m, net:  ${(gpx.get_elevation_gain() - gpx.get_elevation_loss()).toFixed(0)}  m`;
   }
   
@@ -100,26 +99,28 @@
 {{ end }}
 {{/* HTML scaffolding. Content will be loaded in the JS below */}}
 <section id="container-{{index .Params 0 }}" class="gpx">
-  <div class="map" id="map-{{index .Params 0 }}"></div>
-  <footer>
-    {{- $.Store.Set "counter" 0 }}
-    {{ $len := len .Params }}
-    {{ $colors := site.Params.gpx.trackColors | default (slice "blue" "darkblue" "purple")}}
-    {{ range .Params }}
-      <ul class="info">
-        <li><input type="checkbox" checked class="tracks" track-id="{{ $.Store.Get "counter" }}"/></li>
-        <li style="color:{{ index $colors (mod ($.Store.Get "counter") (len $colors))}}">&#9632;</li>
-        <!-- label indices start from 1 -->
-        {{- $.Store.Add "counter" 1 }}
-        <li>{{ if gt $len 1 }}Track {{$.Store.Get "counter" }}: {{ end }}</li>
-        <li class="start-{{ . }}"></li>
-        <li class="distance-{{ . }}"></li>
-        <li class="duration-{{ . }}"></li>
-        <li class="elevation-{{ . }}"></li>
-        <li><a href="{{ . }}">Download</a></li>
-      </ul>
-    {{ end }}
-  </footer>
+  <details style="cursor: ▶︎">
+    <summary>Route</summary>
+    <div class="map" id="map-{{index .Params 0 }}"></div>
+    <footer>
+      {{- $.Store.Set "counter" 0 }}
+      {{ $len := len .Params }}
+      {{ $colors := site.Params.gpx.trackColors | default (slice "blue" "darkblue" "purple")}}
+      {{ range .Params }}
+        <ul class="info">
+          <li><input type="checkbox" checked class="tracks" track-id="{{ $.Store.Get "counter" }}"/></li>
+          <li style="color:{{ index $colors (mod ($.Store.Get "counter") (len $colors))}}">&#9632;</li>
+          <!-- label indices start from 1 -->
+          {{- $.Store.Add "counter" 1 }}
+          <li>{{ if gt $len 1 }}Track {{$.Store.Get "counter" }}: {{ end }}</li>
+          <li class="start-{{ . }}"></li>
+          <li class="distance-{{ . }}"></li>
+          <li class="elevation-{{ . }}"></li>
+          <li><a href="{{ . }}">Download</a></li>
+        </ul>
+      {{ end }}
+    </footer>
+  </details>
 </section>
 
 <script>
